@@ -1,0 +1,5 @@
+flask
+flask-socketio
+python-dotenv
+flask-bcrypt
+flask-login
