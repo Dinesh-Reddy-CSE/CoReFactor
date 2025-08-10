@@ -3,7 +3,7 @@
 
 ---
 
-<h2 align="center">🚀 Project Overview</h2>
+<h2 align="center">Project Overview</h2>
 
 **CoRefactor** is a cutting-edge, web-based platform designed for real-time collaborative coding. It enables multiple developers to work together seamlessly on Python code, supported by integrated AI code assistance, live chatting, and activity tracking.
 
