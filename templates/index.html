@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard | CoRefactor{% endblock %}
+{% block body %}
+<div class="container-fluid py-4 px-5 animate__animated animate__fadeIn">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="text-center mb-5">
+        <h1 class="text-light display-4 fw-bold">CoRefactor</h1>
+        <p class="lead text-muted">Work together in real-time on Python code</p>
+      </div>
+      
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card bg-card h-100 animate__animated animate__fadeInLeft glass-effect">
+            <div class="card-body p-4">
+              <h3 class="text-light mb-4"><i class="fas fa-plus-circle me-2"></i>Create Room</h3>
+              <form method="post" action="{{ url_for('create_room') }}">
+                <div class="mb-3">
+                  <label class="form-label text-muted">Room ID (optional)</label>
+                  <input type="text" name="room_id" maxlength="8" class="form-control" placeholder="Leave blank for random">
+                </div>
+                <button type="submit" class="btn btn-primary w-100 btn-anim">
+                  <i class="fas fa-rocket me-1"></i> Create Room
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card bg-card h-100 animate__animated animate__fadeInRight glass-effect">
+            <div class="card-body p-4">
+              <h3 class="text-light mb-4"><i class="fas fa-users me-2"></i>Join Room</h3>
+              <form method="post" action="{{ url_for('join_room_route') }}">
+                <div class="mb-3">
+                  <label class="form-label text-muted">Room ID</label>
+                  <input type="text" name="room_id" maxlength="8" class="form-control" placeholder="Enter room ID" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 btn-anim">
+                  <i class="fas fa-sign-in-alt me-1"></i> Join Room
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}Register | CoRefactor{% endblock %}
+{% block body %}
+<div class="row justify-content-center">
+  <div class="form-box col-md-6 col-lg-4 animate__animated animate__fadeIn glass-effect">
+    <div class="text-center mb-4">
+      <div class="logo mb-3">
+        <i class="fas fa-user-plus fa-3x text-gradient"></i>
+      </div>
+      <h2 class="text-light">Create Account</h2>
+    </div>
+    
+    <form method="post" autocomplete="off" class="animate__animated animate__fadeIn animate__delay-1s">
+      <div class="mb-3">
+        <label for="email" class="form-label text-muted">Email</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+      <div class="mb-3">
+        <label for="username" class="form-label text-muted">Username</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label text-muted">Password</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100 btn-anim mt-3">
+        <i class="fas fa-user-plus me-2"></i> Register
+      </button>
+    </form>
+    
+    <div class="text-center mt-3">
+      <p class="text-muted">Already have an account? <a href="{{ url_for('login') }}" class="text-light">Login here</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}
