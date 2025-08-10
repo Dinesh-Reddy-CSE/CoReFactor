@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block title %}About | CoRefactor{% endblock %}
+{% block body %}
+<div class="container py-4 animate__animated animate__fadeIn">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card bg-card glass-effect">
+        <div class="card-body p-4">
+          <h2 class="text-gradient mb-4"><i class="fas fa-info-circle me-2"></i>About CoRefactor</h2>
+          <p class="text-light">
+            Welcome to **CoRefactor**! This project was built as part of a hackathon, aiming to create a seamless and intelligent collaborative coding environment. Our goal was to address the common challenges faced by developers working together on code, especially in remote settings.
+          </p>
+          <p class="text-light">
+            **Key Features & Why We Built Them:**
+          </p>
+          <ul>
+            <li class="text-light">
+              **Real-time Code Editor (Monaco Editor)**: We integrated the powerful Monaco Editor (the same one used in VS Code) to provide a professional coding experience with syntax highlighting, line numbers, and smooth real-time synchronization. This ensures that all participants see the code updates instantly, just like they would in a local IDE.
+            </li>
+            <li class="text-light">
+              **Integrated AI Chatbot**: A core feature of CoRefactor is the AI chatbot, powered by a local Large Language Model (LLM) like Llama 3 (via Ollama). This chatbot can read the current code in the editor and answer questions about it in real-time. This eliminates the need to switch contexts or search external documentation, making collaborative debugging and understanding much faster. All queries and responses are visible to everyone in the room, fostering shared learning.
+            </li>
+            <li class="text-light">
+              **Collaborative Execution & Output**: Users can run the Python code directly within the room, and the console output is shared with everyone. This allows for immediate testing and validation of changes.
+            </li>
+            <li class="text-light">
+              **Participant Management**: The application displays a real-time list of participants in the room, making it easy to see who is actively collaborating.
+            </li>
+            <li class="text-light">
+              **Secure User Authentication**: We implemented a secure user authentication system to ensure that only registered users can access and create collaborative rooms.
+            </li>
+          </ul>
+          <p class="text-light">
+            Our vision for CoRefactor is to enhance developer productivity and collaboration by bringing intelligent assistance directly into the coding workflow, all within a user-friendly and visually appealing interface. We believe that by combining real-time collaboration with AI-powered insights, we can make coding together a more efficient and enjoyable experience.
+          </p>
+          <p class="text-light">
+            Thank you for checking out our project!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
