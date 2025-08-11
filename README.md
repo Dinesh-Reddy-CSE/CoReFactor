@@ -1,4 +1,4 @@
-<h1 align="center">CoRefactor</h1>
+<h1 align="center">🌐CoRefactor</h1>
 <h4 align="center">Real-Time Collaborative Python Code Editor with AI Assistance</h4>
 
 ---
