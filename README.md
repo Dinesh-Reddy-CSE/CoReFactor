@@ -7,7 +7,7 @@
 
 **CoRefactor** is a cutting-edge, web-based platform designed for real-time collaborative coding. It enables multiple developers to work together seamlessly on Python code, supported by integrated AI code assistance, live chatting, and activity tracking.
 
-This project was originally developed during a hackathon to tackle issues faced by remote developers working together. Its user interface is intuitive, productivity-focused, and visually appealing, making coding with teammates or learning together fast and enjoyable.
+This project was originally developed during a hackathon to tackle issues faced by developers working together. Its user interface is intuitive, productivity-focused, and visually appealing, making coding with teammates or learning together fast and enjoyable.
 
 ---
 
