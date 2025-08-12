@@ -81,7 +81,7 @@ This project was originally developed during a hackathon to tackle issues faced 
 ## 📌 Use Cases
 
 - **Pair programming** with feedback
-- **Remote hackathons & competitions**
+- **Hackathons & competitions**
 - **Teaching & learning Python collaboratively**
 - **Live coding interviews with AI help**
 
