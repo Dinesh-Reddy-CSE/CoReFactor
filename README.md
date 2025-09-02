@@ -93,10 +93,4 @@ Licensed under the **MIT License**.
 
 ---
 
-## 🙏 Acknowledgements
-
-Built during a hackathon by the [Dinesh-Reddy-CSE](https://github.com/Dinesh-Reddy-CSE), [Aurus7900](https://github.com/Aurus7900), [Vshetti780](https://github.com/Vshetti780) and [Veenbeans](https://github.com/Veenbeans) , inspired by the need for smarter, more collaborative developer tools.
-
----
-
 > **Ready to code together? Try out CoRefactor now!**
