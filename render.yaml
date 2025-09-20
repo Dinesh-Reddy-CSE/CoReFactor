@@ -2,7 +2,7 @@ services:
   - type: web
     name: corefactor
     env: python
-    pythonVersion: "3.11"
+    python-3.11
     buildCommand: "pip install -r requirements.txt"
     preDeployCommand: "flask init-db"
     startCommand: "gunicorn --worker-class eventlet -w 1 app:app"
