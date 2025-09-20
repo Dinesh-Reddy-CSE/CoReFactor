@@ -1,6 +1,7 @@
 import os
 import uuid
 import sqlite3
+import logging
 from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash
@@ -9,11 +10,22 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import requests
 import json
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if it exists
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "changeme123")
 bcrypt = Bcrypt(app)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
@@ -68,7 +80,10 @@ def init_db():
         
         conn.commit()
 
-init_db()
+# Only initialize database if it doesn't exist or in development mode
+if not os.path.exists("database.db") or os.environ.get("FLASK_ENV") == "development":
+    init_db()
+    logger.info("Database initialized")
 
 def room_owner_required(f):
     @wraps(f)
@@ -414,4 +429,5 @@ def handle_chatbot_request(data):
 
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port, debug=os.environ.get("FLASK_DEBUG", "False").lower() == "true")
