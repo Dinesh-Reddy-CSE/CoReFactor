@@ -29,12 +29,14 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
+DATABASE_PATH = os.path.join(os.environ.get('RENDER_DISK_PATH', '.'), 'database.db')
+
 class User(UserMixin):
     pass
 
 @login_manager.user_loader
 def load_user(user_id):
-    with sqlite3.connect("database.db") as conn:
+    with sqlite3.connect(DATABASE_PATH) as conn:
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute("SELECT id, email, name, avatar FROM users WHERE id = ?", (user_id,))
@@ -49,48 +51,43 @@ def load_user(user_id):
         return user
 
 def init_db():
-    with sqlite3.connect("database.db") as conn:
+    with sqlite3.connect(DATABASE_PATH) as conn:
         c = conn.cursor()
-        
-        c.execute("DROP TABLE IF EXISTS users")
-        c.execute("DROP TABLE IF EXISTS rooms")
-        c.execute("DROP TABLE IF EXISTS user_rooms")
-        c.execute("DROP TABLE IF EXISTS activities")
-        c.execute("DROP TABLE IF EXISTS chat_history")
-        
-        c.execute('''CREATE TABLE users
-                     (id TEXT PRIMARY KEY, email TEXT UNIQUE, name TEXT, 
+
+        c.execute('''CREATE TABLE IF NOT EXISTS users
+                     (id TEXT PRIMARY KEY, email TEXT UNIQUE, name TEXT,
                      avatar TEXT, password TEXT, theme TEXT DEFAULT 'dark')''')
-        
-        c.execute('''CREATE TABLE rooms
+
+        c.execute('''CREATE TABLE IF NOT EXISTS rooms
                      (id TEXT PRIMARY KEY, name TEXT, created_at TIMESTAMP,
                      creator_id TEXT)''')
-        
-        c.execute('''CREATE TABLE user_rooms
-                     (user_id TEXT, room_id TEXT, joined_at TIMESTAMP, 
+
+        c.execute('''CREATE TABLE IF NOT EXISTS user_rooms
+                     (user_id TEXT, room_id TEXT, joined_at TIMESTAMP,
                      PRIMARY KEY (user_id, room_id))''')
-        
-        c.execute('''CREATE TABLE activities
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id TEXT, 
+
+        c.execute('''CREATE TABLE IF NOT EXISTS activities
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id TEXT,
                      user_id TEXT, action TEXT, timestamp TIMESTAMP)''')
-        
-        c.execute('''CREATE TABLE chat_history
+
+        c.execute('''CREATE TABLE IF NOT EXISTS chat_history
                      (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id TEXT,
                      sender_id TEXT, message TEXT, timestamp TIMESTAMP)''')
-        
+
         conn.commit()
 
-# Only initialize database if it doesn't exist or in development mode
-if not os.path.exists("database.db") or os.environ.get("FLASK_ENV") == "development":
+@app.cli.command("init-db")
+def init_db_command():
+    """Initializes the database."""
     init_db()
-    logger.info("Database initialized")
+    logger.info("Database initialized from command line.")
 
 def room_owner_required(f):
     @wraps(f)
     def decorated_function(room_id, *args, **kwargs):
-        with sqlite3.connect("database.db") as conn:
+        with sqlite3.connect(DATABASE_PATH) as conn:
             c = conn.cursor()
-            c.execute("SELECT id FROM rooms WHERE id = ? AND creator_id = ?", 
+            c.execute("SELECT id FROM rooms WHERE id = ? AND creator_id = ?",
                      (room_id, current_user.id))
             if not c.fetchone():
                 flash("Only room owner can perform this action", "error")
@@ -108,7 +105,7 @@ def login():
     if request.method == "POST":
         email = request.form["email"].strip()
         password = request.form["password"]
-        with sqlite3.connect("database.db") as conn:
+        with sqlite3.connect(DATABASE_PATH) as conn:
             c = conn.cursor()
             c.execute("SELECT id, email, name, avatar, password FROM users WHERE email = ?", (email,))
             user_data = c.fetchone()
@@ -132,7 +129,7 @@ def register():
         hashed = bcrypt.generate_password_hash(password).decode("utf-8")
         avatar = f"https://ui-avatars.com/api/?name={username}&background=random"
         try:
-            with sqlite3.connect("database.db") as conn:
+            with sqlite3.connect(DATABASE_PATH) as conn:
                 c = conn.cursor()
                 user_id = str(uuid.uuid4())
                 c.execute("INSERT INTO users (id, email, name, password, avatar) VALUES (?, ?, ?, ?, ?)",
@@ -153,7 +150,7 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
-    with sqlite3.connect("database.db") as conn:
+    with sqlite3.connect(DATABASE_PATH) as conn:
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute("SELECT r.id, r.name, ur.joined_at FROM rooms r JOIN user_rooms ur ON r.id = ur.room_id WHERE ur.user_id = ?", (current_user.id,))
@@ -177,34 +174,34 @@ def join_room_route():
 @app.route("/room/<room_id>")
 @login_required
 def room(room_id):
-    with sqlite3.connect("database.db") as conn:
+    with sqlite3.connect(DATABASE_PATH) as conn:
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute("SELECT creator_id FROM rooms WHERE id = ?", (room_id,))
         room_data = c.fetchone()
-        
+
         if not room_data:
-            c.execute("INSERT INTO rooms (id, name, created_at, creator_id) VALUES (?, ?, ?, ?)", 
+            c.execute("INSERT INTO rooms (id, name, created_at, creator_id) VALUES (?, ?, ?, ?)",
                      (room_id, f"Room {room_id}", datetime.now(), current_user.id))
-        
-        c.execute("INSERT OR IGNORE INTO user_rooms (user_id, room_id, joined_at) VALUES (?, ?, ?)", 
+
+        c.execute("INSERT OR IGNORE INTO user_rooms (user_id, room_id, joined_at) VALUES (?, ?, ?)",
                  (current_user.id, room_id, datetime.now()))
         conn.commit()
-    
+
     return render_template("editor.html", room_id=room_id, user=current_user)
 
 @app.route("/room/<room_id>/leave")
 @login_required
 def leave_room(room_id):
-    with sqlite3.connect("database.db") as conn:
+    with sqlite3.connect(DATABASE_PATH) as conn:
         c = conn.cursor()
-        c.execute("DELETE FROM user_rooms WHERE user_id = ? AND room_id = ?", 
+        c.execute("DELETE FROM user_rooms WHERE user_id = ? AND room_id = ?",
                  (current_user.id, room_id))
-        
+
         c.execute("SELECT COUNT(*) FROM user_rooms WHERE room_id = ?", (room_id,))
         if c.fetchone()[0] == 0:
             c.execute("DELETE FROM rooms WHERE id = ?", (room_id,))
-        
+
         conn.commit()
     return redirect(url_for('home'))
 
@@ -216,7 +213,7 @@ def handle_connect():
 @socketio.on("disconnect")
 def handle_disconnect():
     if current_user.is_authenticated:
-        with sqlite3.connect("database.db") as conn:
+        with sqlite3.connect(DATABASE_PATH) as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute("SELECT room_id FROM user_rooms WHERE user_id = ?", (current_user.id,))
@@ -234,30 +231,30 @@ def handle_leave_room_event(data):
     if not current_user.is_authenticated:
         emit("unauthorized", {"msg": "Please login"})
         return
-    
+
     room_id = data.get("room_id")
     if not room_id:
         return
-        
+
     socket_leave_room(room_id)
-    
-    with sqlite3.connect("database.db") as conn:
+
+    with sqlite3.connect(DATABASE_PATH) as conn:
         c = conn.cursor()
         c.execute("DELETE FROM user_rooms WHERE user_id = ? AND room_id = ?",
                  (current_user.id, room_id))
-        
+
         c.execute("SELECT COUNT(*) FROM user_rooms WHERE room_id = ?", (room_id,))
         if c.fetchone()[0] == 0:
             c.execute("DELETE FROM rooms WHERE id = ?", (room_id,))
-        
+
         conn.commit()
-        
+
     participants = get_participants_list(room_id)
     socketio.emit("participants_update", {
         "participants": participants,
         "sender": current_user.id
     }, room=room_id)
-            
+
 @socketio.on("join")
 def handle_join(data):
     if not current_user.is_authenticated:
@@ -265,14 +262,14 @@ def handle_join(data):
         return
     room_id = data["room_id"]
     join_room(room_id)
-    
+
     participants = get_participants_list(room_id)
     socketio.emit("participants_update", {
         "participants": participants,
         "sender": current_user.id
     }, room=room_id)
-    
-    with sqlite3.connect("database.db") as conn:
+
+    with sqlite3.connect(DATABASE_PATH) as conn:
         c = conn.cursor()
         c.execute(
             "INSERT INTO activities (room_id, user_id, action, timestamp) VALUES (?, ?, ?, ?)",
@@ -281,7 +278,7 @@ def handle_join(data):
         conn.commit()
 
 def get_participants_list(room_id):
-    with sqlite3.connect("database.db") as conn:
+    with sqlite3.connect(DATABASE_PATH) as conn:
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute("""
@@ -304,7 +301,7 @@ def handle_text_change(data):
         {"content": data["content"], "sender": current_user.id},
         room=room_id,
     )
-    with sqlite3.connect("database.db") as conn:
+    with sqlite3.connect(DATABASE_PATH) as conn:
         c = conn.cursor()
         c.execute(
             "INSERT INTO activities (room_id, user_id, action, timestamp) VALUES (?, ?, ?, ?)",
@@ -320,11 +317,11 @@ def handle_run_code(data):
     room_id = data["room_id"]
     code = data["code"]
     input_data = data["input"]
-    
+
     if any(keyword in code for keyword in ['os.', 'sys.', 'subprocess.']):
         socketio.emit("code_output", {"output": "Error: Restricted keywords detected.", "sender": current_user.id}, room=room_id)
         return
-    
+
     try:
         from io import StringIO
         import sys, contextlib
@@ -333,16 +330,16 @@ def handle_run_code(data):
         input_buffer = StringIO(input_data)
         original_stdin, original_stdout = sys.stdin, sys.stdout
         sys.stdin, sys.stdout = input_buffer, output_buffer
-        
+
         with contextlib.redirect_stdout(output_buffer):
             exec(code)
-        
+
         sys.stdin, sys.stdout = original_stdin, original_stdout
         output = output_buffer.getvalue()
-        
+
         if not output:
             output = "Code executed successfully with no output."
-            
+
         socketio.emit("code_output", {"output": output, "sender": current_user.id}, room=room_id)
     except Exception as e:
         socketio.emit("code_output", {"output": f"Error: {str(e)}", "sender": current_user.id}, room=room_id)
@@ -352,13 +349,13 @@ def handle_general_chat_message(data):
     if not current_user.is_authenticated:
         emit("unauthorized", {"msg": "Please login"})
         return
-    
+
     room_id = data.get("room_id")
     message = data.get("message")
-    
+
     if not room_id or not message:
         return
-    
+
     emit("new_general_chat_message", {
         "sender_name": current_user.name,
         "message": message
@@ -373,7 +370,15 @@ def handle_chatbot_request(data):
 
     room_id = data["room_id"]
     query = data["query"]
-    current_code = data["code"] 
+    current_code = data["code"]
+
+    if os.environ.get("OLLAMA_ENABLED") != "true":
+        socketio.emit("chatbot_response", {
+            "user_name": "AI",
+            "query": query,
+            "ai_response": "The chatbot is not enabled. Please set OLLAMA_ENABLED=true in your environment."
+        }, room=room_id)
+        return
 
     try:
         url = "http://localhost:11434/api/generate"
@@ -385,7 +390,7 @@ def handle_chatbot_request(data):
         Current Python Code:
         python
         {current_code}
-        
+
         User's question: {query}
         """
 
@@ -397,10 +402,10 @@ def handle_chatbot_request(data):
 
         response = requests.post(url, headers=headers, data=json.dumps(payload))
         response.raise_for_status()
-        
+
         ai_response = response.json()["response"]
 
-        with sqlite3.connect("database.db") as conn:
+        with sqlite3.connect(DATABASE_PATH) as conn:
             c = conn.cursor()
             c.execute("INSERT INTO chat_history (room_id, sender_id, message, timestamp) VALUES (?, ?, ?, ?)",
                       (room_id, "AI", ai_response, datetime.now()))
